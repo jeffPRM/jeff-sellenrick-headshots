@@ -767,8 +767,8 @@
 <section class="hero">
   <div class="hero-content">
     <p class="hero-eyebrow">Baltimore &amp; Washington D.C.</p>
-    <h1>First Impressions That<br><em>Define</em> Your Brand</h1>
-    <p class="hero-sub">Professional on-site sessions for corporate teams, conferences, and organizations.</p>
+    <h1>Professional Headshots That<br><em>Define</em> Your Brand</h1>
+    <p class="hero-sub">On-location headshots for corporate teams, small businesses, and conference organizers.</p>
     <div class="hero-actions">
       <a href="#contact" class="btn-primary">Book Headshots</a>
       <a href="portfolio.html" class="btn-ghost">View Portfolio</a>
@@ -1171,13 +1171,10 @@
     if (!nav) return;
     var hamburger = nav.querySelector('.nav-hamburger');
     if (hamburger) {
-      function toggleNav(e) {
-        e.preventDefault();
+      hamburger.addEventListener('click', function(e) {
         e.stopPropagation();
         nav.classList.toggle('nav-open');
-      }
-      hamburger.addEventListener('click', toggleNav);
-      hamburger.addEventListener('touchstart', toggleNav, { passive: false });
+      });
     }
     document.querySelectorAll('.nav-links a').forEach(function(a) {
       a.addEventListener('click', function() { nav.classList.remove('nav-open'); });
