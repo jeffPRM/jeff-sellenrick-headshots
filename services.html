@@ -54,6 +54,8 @@
     background: none; border: none; cursor: pointer;
     padding: 6px; flex-direction: column; justify-content: center;
     gap: 5px; z-index: 102;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
   }
   .nav-hamburger span {
     display: block; width: 24px; height: 2px;
@@ -795,10 +797,13 @@
     if (!nav) return;
     var hamburger = nav.querySelector('.nav-hamburger');
     if (hamburger) {
-      hamburger.addEventListener('click', function(e) {
+      function toggleNav(e) {
+        e.preventDefault();
         e.stopPropagation();
         nav.classList.toggle('nav-open');
-      });
+      }
+      hamburger.addEventListener('click', toggleNav);
+      hamburger.addEventListener('touchstart', toggleNav, { passive: false });
     }
     document.querySelectorAll('.nav-links a').forEach(function(a) {
       a.addEventListener('click', function() { nav.classList.remove('nav-open'); });
