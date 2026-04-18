@@ -3,6 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-NZMGEMVZLD"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-NZMGEMVZLD');
+</script>
 <meta name="description" content="Jeff Sellenrick Headshots — professional corporate and team headshots for companies, law firms, real estate brokerages, and conferences across Baltimore, Washington DC, and Central Maryland. On-site sessions, conference headshot booths, and individual headshots available.">
 <meta name="keywords" content="corporate headshots Baltimore, team headshots Maryland, professional headshots Baltimore, headshot booth, conference headshot booth, executive headshots, employee headshots, on-site headshots, staff headshots, company headshots, LinkedIn headshots, headshot photographer Baltimore, Washington DC headshots, Annapolis headshots">
 <meta property="og:title" content="Jeff Sellenrick Headshots — Corporate & Team Headshots | Baltimore, MD">
@@ -160,7 +168,7 @@
     font-weight: 300; line-height: 1.08; color: var(--off-white);
     margin-bottom: 28px; letter-spacing: -0.01em;
   }
-  .hero h1 em { font-style: italic; color: rgba(245,243,239,0.65); }
+  .hero h1 em { font-style: normal; color: var(--off-white); }
   .hero-sub {
     font-size: 1.08rem; color: rgba(245,243,239,0.6); line-height: 1.7;
     max-width: 520px; margin: 0 auto 48px; font-weight: 300;
@@ -1172,8 +1180,15 @@
     if (!nav) return;
     var hamburger = nav.querySelector('.nav-hamburger');
     if (hamburger) {
+      var hasTouched = false;
+      hamburger.addEventListener('touchend', function(e) {
+        e.preventDefault();
+        hasTouched = true;
+        nav.classList.toggle('nav-open');
+      }, { passive: false });
       hamburger.addEventListener('click', function(e) {
         e.stopPropagation();
+        if (hasTouched) { hasTouched = false; return; }
         nav.classList.toggle('nav-open');
       });
     }

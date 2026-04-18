@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NZMGEMVZLD"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-NZMGEMVZLD');
+  </script>
   <title>Corporate, Team & Conference Headshot Services | Jeff Sellenrick Headshots — Baltimore MD</title>
   <meta name="description" content="Corporate headshots, team headshots, and conference headshot booths for companies, law firms, conferences, and individual professionals across Baltimore, Washington DC, and Central Maryland. On-site sessions available.">
   <link rel="canonical" href="https://jeffsellenrickheadshots.com/services.html">
@@ -797,13 +805,17 @@
     if (!nav) return;
     var hamburger = nav.querySelector('.nav-hamburger');
     if (hamburger) {
-      function toggleNav(e) {
+      var hasTouched = false;
+      hamburger.addEventListener('touchend', function(e) {
         e.preventDefault();
-        e.stopPropagation();
+        hasTouched = true;
         nav.classList.toggle('nav-open');
-      }
-      hamburger.addEventListener('click', toggleNav);
-      hamburger.addEventListener('touchstart', toggleNav, { passive: false });
+      }, { passive: false });
+      hamburger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (hasTouched) { hasTouched = false; return; }
+        nav.classList.toggle('nav-open');
+      });
     }
     document.querySelectorAll('.nav-links a').forEach(function(a) {
       a.addEventListener('click', function() { nav.classList.remove('nav-open'); });

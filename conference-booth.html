@@ -3,6 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-NZMGEMVZLD"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-NZMGEMVZLD');
+  </script>
   <title>Conference and Event Headshot Booth | Jeff Sellenrick Headshots — Maryland, DC & Nationwide</title>
   <meta name="description" content="Professional headshot booths for conferences, trade shows, and corporate events. Studio-quality headshots with high-volume throughput and instant or same-day delivery. Serving events across Maryland, Washington DC, and nationwide.">
   <meta name="keywords" content="conference headshot booth, headshot booth for events, trade show headshots, event headshot photography, convention headshot booth, conference photography headshots, headshot booth Maryland, DC conference headshots, corporate event headshots, instant headshot delivery">
@@ -671,13 +679,17 @@
     if (!nav) return;
     var hamburger = nav.querySelector('.nav-hamburger');
     if (hamburger) {
-      function toggleNav(e) {
+      var hasTouched = false;
+      hamburger.addEventListener('touchend', function(e) {
         e.preventDefault();
-        e.stopPropagation();
+        hasTouched = true;
         nav.classList.toggle('nav-open');
-      }
-      hamburger.addEventListener('click', toggleNav);
-      hamburger.addEventListener('touchstart', toggleNav, { passive: false });
+      }, { passive: false });
+      hamburger.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (hasTouched) { hasTouched = false; return; }
+        nav.classList.toggle('nav-open');
+      });
     }
     document.querySelectorAll('.nav-links a').forEach(function(a) {
       a.addEventListener('click', function() { nav.classList.remove('nav-open'); });
