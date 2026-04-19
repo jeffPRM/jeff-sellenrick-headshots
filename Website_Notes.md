@@ -85,7 +85,7 @@ Single-file HTML build (`index.html`) is complete. All portfolio images now loca
 - 10 portfolio photos (Elizabeth, Danielle, Matt, Pam, Fabien, Jonathan, David, Alice, Justin, and more)
 - Jeff's headshot in About section
 - Real testimonials verbatim: Lauren, Justin, Fabien, Allison, Jonathan
-- Contact info: `info@jeffsellenrickheadshots.com` / `(240) 654-2145`
+- Contact info: `info@jeffsellenrickheadshots.com` / `(410) 929-5407`
 - Service descriptions including actor headshots and conference booth option
 - Location copy: Baltimore, Central Maryland, Washington D.C., Annapolis, Nationwide
 - About section uses Jeff's original Squarespace copy verbatim ("I'm Here to Help")
