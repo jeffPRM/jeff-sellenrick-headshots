@@ -430,4 +430,15 @@
         nav.classList.toggle('nav-open');
       }, { passive: false });
       hamburger.addEventListener('click', function(e) {
-        e.stopPropagation
+        ();
+        if (hasTouched) { hasTouched = false; return; }
+        nav.classList.toggle('nav-open');
+      });
+    }
+    document.querySelectorAll('.nav-links a').forEach(function(a) {
+      a.addEventListener('click', function() { nav.classList.remove('nav-open'); });
+    });
+  })();
+</script>
+</body>
+</html>
