@@ -46,6 +46,21 @@
     pointer-events: none;
   }
 
+  #debug-status {
+    position: absolute; top: 8px; left: 8px; right: 8px;
+    color: #0f0;
+    font-family: Menlo, monospace;
+    font-size: 11px;
+    line-height: 1.5;
+    background: rgba(0,0,0,0.55);
+    padding: 6px 8px;
+    border-radius: 6px;
+    z-index: 20;
+    white-space: pre-wrap;
+    word-break: break-all;
+    pointer-events: none;
+  }
+
   #camera-error {
     position: absolute; inset: 0;
     display: none;
@@ -117,6 +132,7 @@
     <video id="camera" autoplay playsinline muted></video>
     <canvas id="qr-canvas"></canvas>
     <div id="scan-hint">Hold your QR code up to the camera</div>
+    <div id="debug-status">starting...</div>
     <div id="camera-error">
       <div>Camera access is required for this installation.</div>
       <button id="retry-camera">Enable Camera</button>
@@ -10263,9 +10279,18 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   var SAME_CODE_COOLDOWN_MS = 8000;
   var HARD_CAP_MS = 15 * 60 * 1000; // safety net reset for any video
 
+  var debugEl = document.getElementById('debug-status');
+  var scanCount = 0;
+  var lastRaw = '';
+  function setDebug(msg) {
+    if (debugEl) debugEl.textContent = msg;
+  }
+  setDebug('jsQR loaded: ' + (typeof jsQR === 'function'));
+
   function startCamera() {
     cameraError.style.display = 'none';
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      setDebug('getUserMedia not supported on this browser');
       cameraError.style.display = 'flex';
       return;
     }
@@ -10275,8 +10300,10 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }).then(function (stream) {
       video.srcObject = stream;
       video.play();
+      setDebug('camera stream OK, waiting for frames...');
       requestAnimationFrame(scanLoop);
-    }).catch(function () {
+    }).catch(function (err) {
+      setDebug('getUserMedia ERROR: ' + err.name + ' - ' + err.message);
       cameraError.style.display = 'flex';
     });
   }
@@ -10287,17 +10314,29 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     requestAnimationFrame(scanLoop);
     if (ts - lastScanTime < SCAN_INTERVAL_MS) return;
     lastScanTime = ts;
-    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) {
+      setDebug('waiting on video (readyState ' + video.readyState + ')');
+      return;
+    }
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    var code = jsQR(imageData.data, imageData.width, imageData.height, {
-      inversionAttempts: 'dontInvert'
-    });
-    if (code && code.data) {
-      handleScan(code.data);
+    try {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      var code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert'
+      });
+      scanCount++;
+      if (code && code.data) {
+        lastRaw = code.data;
+        handleScan(code.data);
+      }
+      setDebug('cam ' + canvas.width + 'x' + canvas.height +
+        ' | scans ' + scanCount +
+        ' | last read: ' + (lastRaw || '(none yet)'));
+    } catch (e) {
+      setDebug('SCAN ERROR: ' + e.name + ' - ' + e.message);
     }
   }
 
@@ -10327,9 +10366,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 
   function handleScan(rawData) {
     var id = extractYouTubeId(rawData);
-    if (!id) return;
+    if (!id) {
+      setDebug('scanned but no YouTube ID found in: ' + rawData);
+      return;
+    }
     var now = Date.now();
     if (id === currentVideoId && now < cooldownUntil) return;
+    setDebug('loading video ' + id);
     loadVideo(id);
   }
 
