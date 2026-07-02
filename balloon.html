@@ -15,42 +15,19 @@
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
     touch-action: manipulation;
   }
-  #stage {
-    display: flex;
+  #camera {
+    position: fixed; top: 0; left: 0;
     width: 100vw; height: 100vh;
-  }
-  #camera-pane, #content-pane {
-    width: 50%; height: 100%;
-    position: relative;
-    overflow: hidden;
+    object-fit: cover;
     background: #000;
   }
-  #camera-pane { border-right: 1px solid #111; }
-
-  #camera {
-    position: absolute; top: 50%; left: 50%;
-    width: 100%; height: 100%;
-    object-fit: cover;
-    transform: translate(-50%, -50%);
-  }
   #qr-canvas { display: none; }
-
-  #scan-hint {
-    position: absolute; bottom: 24px; left: 0; right: 0;
-    text-align: center;
-    color: rgba(255,255,255,0.85);
-    font-size: 15px;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
-    pointer-events: none;
-  }
 
   #debug-status {
     position: absolute; top: 8px; left: 8px; right: 8px;
     color: #0f0;
     font-family: Menlo, monospace;
-    font-size: 11px;
+    font-size: 12px;
     line-height: 1.5;
     background: rgba(0,0,0,0.55);
     padding: 6px 8px;
@@ -61,6 +38,18 @@
     pointer-events: none;
   }
 
+  #scan-hint {
+    position: absolute; bottom: 24px; left: 0; right: 0;
+    text-align: center;
+    color: rgba(255,255,255,0.85);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    pointer-events: none;
+    z-index: 10;
+  }
+
   #camera-error {
     position: absolute; inset: 0;
     display: none;
@@ -68,6 +57,7 @@
     flex-direction: column;
     color: #fff; text-align: center; padding: 24px;
     background: #000;
+    z-index: 30;
   }
   #camera-error button {
     margin-top: 16px;
@@ -78,132 +68,21 @@
     background: #fff;
     color: #000;
   }
-
-  #welcome {
-    position: absolute; inset: 0;
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    color: rgba(255,255,255,0.9);
-    background: radial-gradient(circle at 50% 40%, #14141c 0%, #000 70%);
-  }
-  #welcome .balloon {
-    width: 90px; height: auto;
-    animation: float 4.5s ease-in-out infinite;
-    margin-bottom: 28px;
-  }
-  #welcome .msg {
-    font-size: 19px;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    text-align: center;
-    opacity: 0.75;
-    padding: 0 40px;
-  }
-  @keyframes float {
-    0%, 100% { transform: translateY(0px); }
-    50% { transform: translateY(-14px); }
-  }
-
-  #player {
-    position: absolute; inset: 0;
-    width: 100%; height: 100%;
-    border: none;
-    display: none;
-  }
-
-  #link-prompt {
-    position: absolute; inset: 0;
-    display: none;
-    align-items: center; justify-content: center;
-    flex-direction: column;
-    background-size: cover;
-    background-position: center;
-    cursor: pointer;
-    z-index: 15;
-  }
-  #link-prompt::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: rgba(0,0,0,0.55);
-  }
-  #link-prompt .tap-box {
-    position: relative;
-    display: flex; flex-direction: column; align-items: center;
-    padding: 28px 40px;
-    border-radius: 16px;
-    background: rgba(255,255,255,0.12);
-    border: 1px solid rgba(255,255,255,0.4);
-    animation: pulse 1.2s ease-in-out infinite;
-  }
-  #link-prompt .tap-box .title {
-    color: #fff;
-    font-size: 24px;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-  }
-  #link-prompt .tap-box .sub {
-    color: rgba(255,255,255,0.7);
-    font-size: 13px;
-    margin-top: 6px;
-  }
-  @keyframes pulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.04); }
-  }
-
-  #staff-reset {
-    position: absolute;
-    bottom: 10px; right: 10px;
-    width: 40px; height: 40px;
-    border-radius: 20px;
-    background: rgba(255,255,255,0.06);
-    color: rgba(255,255,255,0.3);
-    border: none;
-    font-size: 16px;
-    z-index: 10;
-  }
 </style>
 </head>
 <body>
 
-<div id="stage">
-
-  <div id="camera-pane">
-    <video id="camera" autoplay playsinline muted></video>
-    <canvas id="qr-canvas"></canvas>
-    <div id="scan-hint">Hold your QR code up to the camera</div>
-    <div id="debug-status">starting...</div>
-    <div id="camera-error">
-      <div>Camera access is required for this installation.</div>
-      <button id="retry-camera">Enable Camera</button>
-    </div>
-  </div>
-
-  <div id="content-pane">
-    <div id="welcome">
-      <svg class="balloon" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
-        <ellipse cx="50" cy="50" rx="42" ry="50" fill="#e8506a"/>
-        <path d="M40 96 L46 108 L54 108 L60 96 Z" fill="#e8506a"/>
-        <line x1="50" y1="108" x2="50" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
-      </svg>
-      <div class="msg">Hold up your QR code</div>
-    </div>
-    <div id="link-prompt">
-      <div class="tap-box">
-        <div class="title">Tap to Watch</div>
-        <div class="sub">link disappears in a few seconds</div>
-      </div>
-    </div>
-    <iframe id="player"
-      allow="autoplay; encrypted-media; picture-in-picture"
-      allowfullscreen
-      playsinline></iframe>
-    <button id="staff-reset" title="Reset">&#8635;</button>
-  </div>
-
+<video id="camera" autoplay playsinline muted></video>
+<canvas id="qr-canvas"></canvas>
+<div id="debug-status">starting...</div>
+<div id="scan-hint">Hold your QR code up to the camera</div>
+<div id="camera-error">
+  <div>Camera access is required for this installation.</div>
+  <button id="retry-camera">Enable Camera</button>
 </div>
 
 <script>
+
 (function webpackUniversalModuleDefinition(root, factory) {
 	if(typeof exports === 'object' && typeof module === 'object')
 		module.exports = factory();
@@ -10306,6 +10185,7 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
 /***/ })
 /******/ ])["default"];
 });
+
 </script>
 <script>
 (function () {
@@ -10314,56 +10194,24 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   var ctx = canvas.getContext('2d', { willReadFrequently: true });
   var cameraError = document.getElementById('camera-error');
   var retryBtn = document.getElementById('retry-camera');
-  var welcome = document.getElementById('welcome');
-  var player = document.getElementById('player');
-  var staffReset = document.getElementById('staff-reset');
-
-  var currentVideoId = null;
-  var cooldownUntil = 0;
-  var hardCapTimer = null;
-  var SCAN_INTERVAL_MS = 200;
-  var SAME_CODE_COOLDOWN_MS = 8000;
-  var HARD_CAP_MS = 15 * 60 * 1000; // safety net reset for any video
-
   var debugEl = document.getElementById('debug-status');
+
   var scanCount = 0;
   var lastRaw = '';
   var statusMsg = '';
-  function setDebug(msg) {
-    if (debugEl) debugEl.textContent = msg;
-  }
-  function note(msg) {
-    statusMsg = msg;
-    setDebug(msg);
-  }
+  var SCAN_INTERVAL_MS = 200;
+  var NAV_COOLDOWN_MS = 4000;
+  var lastNavRaw = '';
+  var navCooldownUntil = 0;
+
+  function setDebug(msg) { if (debugEl) debugEl.textContent = msg; }
+  function note(msg) { statusMsg = msg; setDebug(msg); }
   setDebug('jsQR loaded: ' + (typeof jsQR === 'function'));
 
-  var linkPrompt = document.getElementById('link-prompt');
-  var pendingVideoId = null;
-  var pendingHideTimer = null;
-  var LINK_HOVER_MS = 5000;
-
-  function showLinkPrompt(id) {
-    pendingVideoId = id;
-    linkPrompt.style.backgroundImage =
-      "url('https://img.youtube.com/vi/" + encodeURIComponent(id) + "/hqdefault.jpg')";
-    linkPrompt.style.display = 'flex';
-    welcome.style.display = 'none';
-    if (pendingHideTimer) clearTimeout(pendingHideTimer);
-    pendingHideTimer = setTimeout(function () {
-      linkPrompt.style.display = 'none';
-      pendingVideoId = null;
-      if (player.style.display !== 'block') welcome.style.display = 'flex';
-    }, LINK_HOVER_MS);
-  }
-
-  linkPrompt.addEventListener('click', function () {
-    if (!pendingVideoId) return;
-    if (pendingHideTimer) { clearTimeout(pendingHideTimer); pendingHideTimer = null; }
-    linkPrompt.style.display = 'none';
-    var id = pendingVideoId;
-    pendingVideoId = null;
-    loadVideo(id);
+  window.addEventListener('error', function (e) { note('JS ERROR: ' + e.message); });
+  window.addEventListener('unhandledrejection', function (e) {
+    var reason = e.reason && e.reason.message ? e.reason.message : e.reason;
+    note('PROMISE ERROR: ' + reason);
   });
 
   function startCamera() {
@@ -10424,129 +10272,14 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
   }
 
-  function extractYouTubeId(raw) {
-    try {
-      var url = new URL(raw);
-      var host = url.hostname.replace(/^www\./, '').replace(/^m\./, '');
-      if (host === 'youtu.be') {
-        var id = url.pathname.split('/').filter(Boolean)[0];
-        return id && id.length >= 10 ? id : null;
-      }
-      if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
-        if (url.pathname === '/watch') {
-          return url.searchParams.get('v');
-        }
-        var parts = url.pathname.split('/').filter(Boolean);
-        if (['shorts', 'embed', 'live'].indexOf(parts[0]) !== -1 && parts[1]) {
-          return parts[1];
-        }
-      }
-    } catch (e) {
-      var m = raw.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{10,})/);
-      if (m) return m[1];
-    }
-    return null;
-  }
-
-  var RESOLVE_COOLDOWN_MS = 8000;
-  var lastResolveRaw = '';
-  var resolveCooldownUntil = 0;
-
-  function offerId(id) {
-    var now = Date.now();
-    if (id === currentVideoId && now < cooldownUntil) return;
-    if (id === pendingVideoId) return;
-    cooldownUntil = now + SAME_CODE_COOLDOWN_MS;
-    note('showing link for ' + id);
-    showLinkPrompt(id);
-  }
-
-  function resolveRedirect(rawUrl) {
-    var proxied = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rawUrl);
-    fetch(proxied)
-      .then(function (res) { return res.json(); })
-      .then(function (data) {
-        var finalUrl = (data && data.status && data.status.url) ? data.status.url : null;
-        if (!finalUrl) { note('resolve failed (no final url) for ' + rawUrl); return; }
-        var id2 = extractYouTubeId(finalUrl);
-        if (id2) {
-          note('resolved ' + rawUrl + ' -> ' + id2);
-          offerId(id2);
-        } else {
-          note('resolved but not YouTube: ' + finalUrl);
-        }
-      })
-      .catch(function (err) {
-        note('resolve ERROR: ' + err.message);
-      });
-  }
-
   function handleScan(rawData) {
-    var id = extractYouTubeId(rawData);
-    if (id) {
-      offerId(id);
-      return;
-    }
-    if (!/^https?:\/\//i.test(rawData)) {
-      note('scanned non-URL data: ' + rawData);
-      return;
-    }
     var now = Date.now();
-    if (rawData === lastResolveRaw && now < resolveCooldownUntil) return;
-    lastResolveRaw = rawData;
-    resolveCooldownUntil = now + RESOLVE_COOLDOWN_MS;
-    note('resolving redirect: ' + rawData);
-    resolveRedirect(rawData);
+    if (rawData === lastNavRaw && now < navCooldownUntil) return;
+    lastNavRaw = rawData;
+    navCooldownUntil = now + NAV_COOLDOWN_MS;
+    note('going to: ' + rawData);
+    window.location.href = rawData;
   }
-
-  function loadVideo(id) {
-    currentVideoId = id;
-    cooldownUntil = Date.now() + SAME_CODE_COOLDOWN_MS;
-    if (pendingHideTimer) { clearTimeout(pendingHideTimer); pendingHideTimer = null; }
-    linkPrompt.style.display = 'none';
-    pendingVideoId = null;
-
-    var src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) +
-      '?autoplay=1&mute=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&controls=1';
-    player.src = src;
-    player.style.display = 'block';
-    welcome.style.display = 'none';
-
-    if (hardCapTimer) clearTimeout(hardCapTimer);
-    hardCapTimer = setTimeout(resetToWelcome, HARD_CAP_MS);
-  }
-
-  function resetToWelcome() {
-    player.src = '';
-    player.style.display = 'none';
-    if (pendingHideTimer) { clearTimeout(pendingHideTimer); pendingHideTimer = null; }
-    linkPrompt.style.display = 'none';
-    pendingVideoId = null;
-    welcome.style.display = 'flex';
-    currentVideoId = null;
-    if (hardCapTimer) { clearTimeout(hardCapTimer); hardCapTimer = null; }
-  }
-
-  // Best-effort: detect YouTube "video ended" via the IFrame postMessage API
-  window.addEventListener('message', function (event) {
-    if (typeof event.origin !== 'string') return;
-    if (event.origin.indexOf('youtube') === -1) return;
-    var data = event.data;
-    try {
-      if (typeof data === 'string') data = JSON.parse(data);
-    } catch (e) { return; }
-    if (!data) return;
-    var state = null;
-    if (data.event === 'onStateChange') state = data.info;
-    if (data.event === 'infoDelivery' && data.info && typeof data.info.playerState === 'number') {
-      state = data.info.playerState;
-    }
-    if (state === 0) { // ended
-      resetToWelcome();
-    }
-  });
-
-  staffReset.addEventListener('click', resetToWelcome);
 
   startCamera();
 })();
