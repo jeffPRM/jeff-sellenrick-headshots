@@ -111,6 +111,46 @@
     display: none;
   }
 
+  #link-prompt {
+    position: absolute; inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    background-size: cover;
+    background-position: center;
+    cursor: pointer;
+    z-index: 15;
+  }
+  #link-prompt::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: rgba(0,0,0,0.55);
+  }
+  #link-prompt .tap-box {
+    position: relative;
+    display: flex; flex-direction: column; align-items: center;
+    padding: 28px 40px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.12);
+    border: 1px solid rgba(255,255,255,0.4);
+    animation: pulse 1.2s ease-in-out infinite;
+  }
+  #link-prompt .tap-box .title {
+    color: #fff;
+    font-size: 24px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  #link-prompt .tap-box .sub {
+    color: rgba(255,255,255,0.7);
+    font-size: 13px;
+    margin-top: 6px;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.04); }
+  }
+
   #staff-reset {
     position: absolute;
     bottom: 10px; right: 10px;
@@ -147,6 +187,12 @@
         <line x1="50" y1="108" x2="50" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
       </svg>
       <div class="msg">Hold up your QR code</div>
+    </div>
+    <div id="link-prompt">
+      <div class="tap-box">
+        <div class="title">Tap to Watch</div>
+        <div class="sub">link disappears in a few seconds</div>
+      </div>
     </div>
     <iframe id="player"
       allow="autoplay; encrypted-media; picture-in-picture"
@@ -10287,6 +10333,34 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   }
   setDebug('jsQR loaded: ' + (typeof jsQR === 'function'));
 
+  var linkPrompt = document.getElementById('link-prompt');
+  var pendingVideoId = null;
+  var pendingHideTimer = null;
+  var LINK_HOVER_MS = 5000;
+
+  function showLinkPrompt(id) {
+    pendingVideoId = id;
+    linkPrompt.style.backgroundImage =
+      "url('https://img.youtube.com/vi/" + encodeURIComponent(id) + "/hqdefault.jpg')";
+    linkPrompt.style.display = 'flex';
+    welcome.style.display = 'none';
+    if (pendingHideTimer) clearTimeout(pendingHideTimer);
+    pendingHideTimer = setTimeout(function () {
+      linkPrompt.style.display = 'none';
+      pendingVideoId = null;
+      if (player.style.display !== 'block') welcome.style.display = 'flex';
+    }, LINK_HOVER_MS);
+  }
+
+  linkPrompt.addEventListener('click', function () {
+    if (!pendingVideoId) return;
+    if (pendingHideTimer) { clearTimeout(pendingHideTimer); pendingHideTimer = null; }
+    linkPrompt.style.display = 'none';
+    var id = pendingVideoId;
+    pendingVideoId = null;
+    loadVideo(id);
+  });
+
   function startCamera() {
     cameraError.style.display = 'none';
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -10372,13 +10446,18 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     }
     var now = Date.now();
     if (id === currentVideoId && now < cooldownUntil) return;
-    setDebug('loading video ' + id);
-    loadVideo(id);
+    if (id === pendingVideoId) return;
+    cooldownUntil = now + SAME_CODE_COOLDOWN_MS;
+    setDebug('showing link for ' + id);
+    showLinkPrompt(id);
   }
 
   function loadVideo(id) {
     currentVideoId = id;
     cooldownUntil = Date.now() + SAME_CODE_COOLDOWN_MS;
+    if (pendingHideTimer) { clearTimeout(pendingHideTimer); pendingHideTimer = null; }
+    linkPrompt.style.display = 'none';
+    pendingVideoId = null;
 
     var src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) +
       '?autoplay=1&mute=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&controls=1';
@@ -10393,6 +10472,9 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   function resetToWelcome() {
     player.src = '';
     player.style.display = 'none';
+    if (pendingHideTimer) { clearTimeout(pendingHideTimer); pendingHideTimer = null; }
+    linkPrompt.style.display = 'none';
+    pendingVideoId = null;
     welcome.style.display = 'flex';
     currentVideoId = null;
     if (hardCapTimer) { clearTimeout(hardCapTimer); hardCapTimer = null; }
