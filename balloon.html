@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Balloon Installation Kiosk</title>
+<style>
+  * { box-sizing: border-box; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+  html, body {
+    margin: 0; padding: 0; width: 100%; height: 100%;
+    background: #000; overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+    touch-action: manipulation;
+  }
+  #stage {
+    display: flex;
+    width: 100vw; height: 100vh;
+  }
+  #camera-pane, #content-pane {
+    width: 50%; height: 100%;
+    position: relative;
+    overflow: hidden;
+    background: #000;
+  }
+  #camera-pane { border-right: 1px solid #111; }
+
+  #camera {
+    position: absolute; top: 50%; left: 50%;
+    width: 100%; height: 100%;
+    object-fit: cover;
+    transform: translate(-50%, -50%);
+  }
+  #qr-canvas { display: none; }
+
+  #scan-hint {
+    position: absolute; bottom: 24px; left: 0; right: 0;
+    text-align: center;
+    color: rgba(255,255,255,0.85);
+    font-size: 15px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    text-shadow: 0 1px 4px rgba(0,0,0,0.8);
+    pointer-events: none;
+  }
+
+  #camera-error {
+    position: absolute; inset: 0;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    color: #fff; text-align: center; padding: 24px;
+    background: #000;
+  }
+  #camera-error button {
+    margin-top: 16px;
+    padding: 12px 20px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: none;
+    background: #fff;
+    color: #000;
+  }
+
+  #welcome {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    color: rgba(255,255,255,0.9);
+    background: radial-gradient(circle at 50% 40%, #14141c 0%, #000 70%);
+  }
+  #welcome .balloon {
+    width: 90px; height: auto;
+    animation: float 4.5s ease-in-out infinite;
+    margin-bottom: 28px;
+  }
+  #welcome .msg {
+    font-size: 19px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    text-align: center;
+    opacity: 0.75;
+    padding: 0 40px;
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-14px); }
+  }
+
+  #player {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+    border: none;
+    display: none;
+  }
+
+  #staff-reset {
+    position: absolute;
+    bottom: 10px; right: 10px;
+    width: 40px; height: 40px;
+    border-radius: 20px;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.3);
+    border: none;
+    font-size: 16px;
+    z-index: 10;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage">
+
+  <div id="camera-pane">
+    <video id="camera" autoplay playsinline muted></video>
+    <canvas id="qr-canvas"></canvas>
+    <div id="scan-hint">Hold your QR code up to the camera</div>
+    <div id="camera-error">
+      <div>Camera access is required for this installation.</div>
+      <button id="retry-camera">Enable Camera</button>
+    </div>
+  </div>
+
+  <div id="content-pane">
+    <div id="welcome">
+      <svg class="balloon" viewBox="0 0 100 140" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="50" cy="50" rx="42" ry="50" fill="#e8506a"/>
+        <path d="M40 96 L46 108 L54 108 L60 96 Z" fill="#e8506a"/>
+        <line x1="50" y1="108" x2="50" y2="140" stroke="rgba(255,255,255,0.4)" stroke-width="1.5"/>
+      </svg>
+      <div class="msg">Hold up your QR code</div>
+    </div>
+    <iframe id="player"
+      allow="autoplay; encrypted-media; picture-in-picture"
+      allowfullscreen
+      playsinline></iframe>
+    <button id="staff-reset" title="Reset">&#8635;</button>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+(function () {
+  var video = document.getElementById('camera');
+  var canvas = document.getElementById('qr-canvas');
+  var ctx = canvas.getContext('2d', { willReadFrequently: true });
+  var cameraError = document.getElementById('camera-error');
+  var retryBtn = document.getElementById('retry-camera');
+  var welcome = document.getElementById('welcome');
+  var player = document.getElementById('player');
+  var staffReset = document.getElementById('staff-reset');
+
+  var currentVideoId = null;
+  var cooldownUntil = 0;
+  var hardCapTimer = null;
+  var SCAN_INTERVAL_MS = 200;
+  var SAME_CODE_COOLDOWN_MS = 8000;
+  var HARD_CAP_MS = 15 * 60 * 1000; // safety net reset for any video
+
+  function startCamera() {
+    cameraError.style.display = 'none';
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      cameraError.style.display = 'flex';
+      return;
+    }
+    navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' } },
+      audio: false
+    }).then(function (stream) {
+      video.srcObject = stream;
+      video.play();
+      requestAnimationFrame(scanLoop);
+    }).catch(function () {
+      cameraError.style.display = 'flex';
+    });
+  }
+  retryBtn.addEventListener('click', startCamera);
+
+  var lastScanTime = 0;
+  function scanLoop(ts) {
+    requestAnimationFrame(scanLoop);
+    if (ts - lastScanTime < SCAN_INTERVAL_MS) return;
+    lastScanTime = ts;
+    if (video.readyState !== video.HAVE_ENOUGH_DATA) return;
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    var code = jsQR(imageData.data, imageData.width, imageData.height, {
+      inversionAttempts: 'dontInvert'
+    });
+    if (code && code.data) {
+      handleScan(code.data);
+    }
+  }
+
+  function extractYouTubeId(raw) {
+    try {
+      var url = new URL(raw);
+      var host = url.hostname.replace(/^www\./, '').replace(/^m\./, '');
+      if (host === 'youtu.be') {
+        var id = url.pathname.split('/').filter(Boolean)[0];
+        return id && id.length >= 10 ? id : null;
+      }
+      if (host === 'youtube.com' || host === 'youtube-nocookie.com') {
+        if (url.pathname === '/watch') {
+          return url.searchParams.get('v');
+        }
+        var parts = url.pathname.split('/').filter(Boolean);
+        if (['shorts', 'embed', 'live'].indexOf(parts[0]) !== -1 && parts[1]) {
+          return parts[1];
+        }
+      }
+    } catch (e) {
+      var m = raw.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/|embed\/|live\/)|youtu\.be\/)([a-zA-Z0-9_-]{10,})/);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  function handleScan(rawData) {
+    var id = extractYouTubeId(rawData);
+    if (!id) return;
+    var now = Date.now();
+    if (id === currentVideoId && now < cooldownUntil) return;
+    loadVideo(id);
+  }
+
+  function loadVideo(id) {
+    currentVideoId = id;
+    cooldownUntil = Date.now() + SAME_CODE_COOLDOWN_MS;
+
+    var src = 'https://www.youtube-nocookie.com/embed/' + encodeURIComponent(id) +
+      '?autoplay=1&mute=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1&controls=1';
+    player.src = src;
+    player.style.display = 'block';
+    welcome.style.display = 'none';
+
+    if (hardCapTimer) clearTimeout(hardCapTimer);
+    hardCapTimer = setTimeout(resetToWelcome, HARD_CAP_MS);
+  }
+
+  function resetToWelcome() {
+    player.src = '';
+    player.style.display = 'none';
+    welcome.style.display = 'flex';
+    currentVideoId = null;
+    if (hardCapTimer) { clearTimeout(hardCapTimer); hardCapTimer = null; }
+  }
+
+  // Best-effort: detect YouTube "video ended" via the IFrame postMessage API
+  window.addEventListener('message', function (event) {
+    if (typeof event.origin !== 'string') return;
+    if (event.origin.indexOf('youtube') === -1) return;
+    var data = event.data;
+    try {
+      if (typeof data === 'string') data = JSON.parse(data);
+    } catch (e) { return; }
+    if (!data) return;
+    var state = null;
+    if (data.event === 'onStateChange') state = data.info;
+    if (data.event === 'infoDelivery' && data.info && typeof data.info.playerState === 'number') {
+      state = data.info.playerState;
+    }
+    if (state === 0) { // ended
+      resetToWelcome();
+    }
+  });
+
+  staffReset.addEventListener('click', resetToWelcome);
+
+  startCamera();
+})();
+</script>
+
+</body>
+</html>
