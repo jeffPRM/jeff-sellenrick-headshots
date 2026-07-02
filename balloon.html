@@ -10328,8 +10328,13 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
   var debugEl = document.getElementById('debug-status');
   var scanCount = 0;
   var lastRaw = '';
+  var statusMsg = '';
   function setDebug(msg) {
     if (debugEl) debugEl.textContent = msg;
+  }
+  function note(msg) {
+    statusMsg = msg;
+    setDebug(msg);
   }
   setDebug('jsQR loaded: ' + (typeof jsQR === 'function'));
 
@@ -10369,7 +10374,11 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       return;
     }
     navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1280 },
+        height: { ideal: 720 }
+      },
       audio: false
     }).then(function (stream) {
       video.srcObject = stream;
@@ -10408,7 +10417,8 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
       }
       setDebug('cam ' + canvas.width + 'x' + canvas.height +
         ' | scans ' + scanCount +
-        ' | last read: ' + (lastRaw || '(none yet)'));
+        ' | last read: ' + (lastRaw || '(none yet)') +
+        (statusMsg ? ' | ' + statusMsg : ''));
     } catch (e) {
       setDebug('SCAN ERROR: ' + e.name + ' - ' + e.message);
     }
@@ -10438,18 +10448,55 @@ function findAlignmentPattern(matrix, alignmentPatternQuads, topRight, topLeft, 
     return null;
   }
 
-  function handleScan(rawData) {
-    var id = extractYouTubeId(rawData);
-    if (!id) {
-      setDebug('scanned but no YouTube ID found in: ' + rawData);
-      return;
-    }
+  var RESOLVE_COOLDOWN_MS = 8000;
+  var lastResolveRaw = '';
+  var resolveCooldownUntil = 0;
+
+  function offerId(id) {
     var now = Date.now();
     if (id === currentVideoId && now < cooldownUntil) return;
     if (id === pendingVideoId) return;
     cooldownUntil = now + SAME_CODE_COOLDOWN_MS;
-    setDebug('showing link for ' + id);
+    note('showing link for ' + id);
     showLinkPrompt(id);
+  }
+
+  function resolveRedirect(rawUrl) {
+    var proxied = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rawUrl);
+    fetch(proxied)
+      .then(function (res) { return res.json(); })
+      .then(function (data) {
+        var finalUrl = (data && data.status && data.status.url) ? data.status.url : null;
+        if (!finalUrl) { note('resolve failed (no final url) for ' + rawUrl); return; }
+        var id2 = extractYouTubeId(finalUrl);
+        if (id2) {
+          note('resolved ' + rawUrl + ' -> ' + id2);
+          offerId(id2);
+        } else {
+          note('resolved but not YouTube: ' + finalUrl);
+        }
+      })
+      .catch(function (err) {
+        note('resolve ERROR: ' + err.message);
+      });
+  }
+
+  function handleScan(rawData) {
+    var id = extractYouTubeId(rawData);
+    if (id) {
+      offerId(id);
+      return;
+    }
+    if (!/^https?:\/\//i.test(rawData)) {
+      note('scanned non-URL data: ' + rawData);
+      return;
+    }
+    var now = Date.now();
+    if (rawData === lastResolveRaw && now < resolveCooldownUntil) return;
+    lastResolveRaw = rawData;
+    resolveCooldownUntil = now + RESOLVE_COOLDOWN_MS;
+    note('resolving redirect: ' + rawData);
+    resolveRedirect(rawData);
   }
 
   function loadVideo(id) {
