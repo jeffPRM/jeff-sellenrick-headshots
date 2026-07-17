@@ -242,6 +242,10 @@
       font-family: var(--serif); font-size: 1.25rem; font-weight: 500;
       color: var(--charcoal); margin-bottom: 8px;
     }
+    .region-item h4 a {
+      color: inherit; text-decoration: none; transition: color 0.2s;
+    }
+    .region-item h4 a:hover { color: var(--teal); }
     .region-item p {
       font-size: 0.875rem; color: var(--gray-700); line-height: 1.7; font-weight: 300;
     }
@@ -258,6 +262,11 @@
       font-size: 0.95rem; color: rgba(245,243,239,0.5); line-height: 1.8;
       font-weight: 300; max-width: 600px; margin-top: 20px;
     }
+    .team-header p a {
+      color: inherit; text-decoration: underline; text-decoration-color: rgba(245,243,239,0.3);
+      transition: color 0.2s;
+    }
+    .team-header p a:hover { color: var(--off-white); text-decoration-color: var(--off-white); }
     .team-grid {
       display: grid; grid-template-columns: repeat(3, 1fr); gap: 2px; margin-bottom: 60px;
     }
