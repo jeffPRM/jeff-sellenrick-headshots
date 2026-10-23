@@ -246,10 +246,13 @@
     .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
     .footer-links a { font-size: 0.875rem; color: rgba(245,243,239,0.55); text-decoration: none; transition: color 0.2s; font-weight: 300; }
     .footer-links a:hover { color: var(--off-white); }
-    .footer-affil { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; padding: 0 0 36px; margin-bottom: 4px; }
-  .footer-affil-label { font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray-400); }
-  .footer-affil img { height: 44px; width: auto; display: block; filter: brightness(0) invert(1); opacity: 0.7; transition: opacity 0.2s; }
-  .footer-affil img:hover { opacity: 1; }
+    .footer-affil { display: flex; align-items: center; gap: 64px; flex-wrap: wrap; padding: 0 0 40px; margin-bottom: 4px; }
+  .footer-affil a { display: block; line-height: 0; }
+  .footer-affil img { width: auto; display: block; filter: brightness(0) invert(1); opacity: 0.7; transition: opacity 0.2s; }
+  .footer-affil a:hover img { opacity: 1; }
+  .footer-affil .affil-hc { height: 88px; }
+  .footer-affil .affil-ppa { height: 100px; }
+  @media (max-width: 640px) { .footer-affil { gap: 36px; } .footer-affil .affil-hc { height: 64px; } .footer-affil .affil-ppa { height: 76px; } }
   .footer-bottom {
       padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.06);
       display: flex; justify-content: space-between; align-items: center;
@@ -438,8 +441,8 @@
       </div>
     </div>
     <div class="footer-affil">
-      <p class="footer-affil-label">Member of</p>
-      <img src="Logos/headshot-crew.png" alt="Peter Hurley's Headshot Crew" loading="lazy">
+      <a href="https://www.ppa.com" target="_blank" rel="noopener"><img class="affil-ppa" src="Logos/ppa-member.png" alt="Proud member of Professional Photographers of America" loading="lazy"></a>
+      <a href="https://headshotcrew.com/u/jeffsellenrickheadshots" target="_blank" rel="noopener"><img class="affil-hc" src="Logos/headshot-crew.png" alt="Peter Hurley's Headshot Crew - Jeff Sellenrick profile" loading="lazy"></a>
     </div>
     <div class="footer-bottom">
       <p class="footer-copy">© 2025 Jeff Sellenrick Headshots. Baltimore, MD. All rights reserved.</p>
