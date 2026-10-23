@@ -307,7 +307,11 @@
     .footer-links { list-style: none; display: flex; flex-direction: column; gap: 10px; }
     .footer-links a { font-size: 0.875rem; color: rgba(245,243,239,0.55); text-decoration: none; transition: color 0.2s; font-weight: 300; }
     .footer-links a:hover { color: var(--off-white); }
-    .footer-bottom {
+    .footer-affil { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; padding: 0 0 36px; margin-bottom: 4px; }
+  .footer-affil-label { font-size: 0.68rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--gray-400); }
+  .footer-affil img { height: 44px; width: auto; display: block; filter: brightness(0) invert(1); opacity: 0.7; transition: opacity 0.2s; }
+  .footer-affil img:hover { opacity: 1; }
+  .footer-bottom {
       padding-top: 28px; border-top: 1px solid rgba(255,255,255,0.06);
       display: flex; justify-content: space-between; align-items: center;
     }
@@ -653,6 +657,10 @@
           <li><a href="#contact">Request a Quote</a></li>
         </ul>
       </div>
+    </div>
+    <div class="footer-affil">
+      <p class="footer-affil-label">Member of</p>
+      <img src="Logos/headshot-crew.png" alt="Peter Hurley's Headshot Crew" loading="lazy">
     </div>
     <div class="footer-bottom">
       <p class="footer-copy">© 2026 Jeff Sellenrick Headshots. Baltimore, MD. All rights reserved.</p>
